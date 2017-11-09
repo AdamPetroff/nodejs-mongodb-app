@@ -6,10 +6,30 @@ const {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose');
 var {User} = require('./models/user');
 var {Todo} = require('./models/todo');
+var {authenticate} = require('./middleware/authenticate');
 
 var app = express();
 
 app.use(bodyParser.json());
+
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new User({
+        email: body.email,
+        password: body.password
+    });
+
+
+
+    user.save().then((user) => {
+        return user.generateAuthToken();
+    }).then((token) => {
+        res.status(201).header('x-auth', token).send(user);
+    }).catch((e) => {
+        console.log(e);
+        res.status(409).send();
+    });
+});
 
 app.post('/todos', (req, res) => {
     var todo = new Todo({
@@ -90,6 +110,12 @@ app.patch('/todos/:id', (req, res) => {
     }, (e) => {
         console.log(res.status(400).send());
     });
+});
+
+
+
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
 });
 
 app.listen(3000, () => {
