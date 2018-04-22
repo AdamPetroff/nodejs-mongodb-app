@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
-const validator = require('validator');
-const jwt = require('jsonwebtoken');
-const _ = require('lodash');
-const bcrypt = require('bcryptjs');
+import mongoose from './../db/mongoose';
+import validator from 'validator';
+import jwt from 'jsonwebtoken';
+import _ from 'lodash';
+import bcrypt from 'bcryptjs';
 
-var UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
     email: {
         trim: true,
         required: true,
@@ -34,16 +34,16 @@ var UserSchema = new mongoose.Schema({
 });
 
 UserSchema.methods.toJSON = function () {
-    var user = this;
-    var userObject = user.toObject();
+    const user = this;
+    const userObject = user.toObject();
 
     return _.pick(userObject, ['_id', 'email']);
 };
 
 UserSchema.methods.generateAuthToken = function () {
-    var user = this;
-    var access = 'auth';
-    var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
+    const user = this;
+    const access = 'auth';
+    const token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
 
     user.tokens.push({access, token});
 
@@ -53,8 +53,8 @@ UserSchema.methods.generateAuthToken = function () {
 };
 
 UserSchema.statics.findByToken = function (token) {
-    var User = this;
-    var decoded;
+    const User = this;
+    let decoded;
 
     try{
         decoded = jwt.verify(token, 'abc123');
@@ -70,7 +70,7 @@ UserSchema.statics.findByToken = function (token) {
 };
 
 UserSchema.statics.findByCredentials = function (email, password) {
-    var User = this;
+    const User = this;
 
     return User.findOne({email}).then((user) => {
         if(!user){
@@ -90,7 +90,7 @@ UserSchema.statics.findByCredentials = function (email, password) {
 };
 
 UserSchema.pre('save', function (next) {
-    var user = this;
+    const user = this;
 
     if(user.isModified('password')){
         bcrypt.genSalt(10, (err, salt) => {
@@ -113,6 +113,6 @@ UserSchema.pre('save', function (next) {
     }
 });
 
-var User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 
-module.exports = {User};
+export default User;
